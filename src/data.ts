@@ -153,7 +153,7 @@ export const projects: Project[] = [
   {
     title: 'CoffeeShare',
     subtitle: 'Mobile subscription platform — React Native, Stripe (BSc thesis)',
-    thumb: { type: 'image', src: '/projects/coffeeshare.jpg' },
+    thumb: { type: 'video', src: '/projects/cs-app-tour.mp4', poster: '/projects/cs-tour-poster.jpg' },
     gallery: [
       {
         type: 'video',
