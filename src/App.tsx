@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { profile, projects, experiences, tools, type Project } from './data'
+import { useEffect, useState } from 'react'
+import { profile, projects, experiences, tools, type Project, type Media } from './data'
 import { Reveal } from './Reveal'
 
 /* ---------- small icons ---------- */
@@ -32,6 +32,12 @@ const ArrowUpRight = ({ className = 'size-5' }: { className?: string }) => (
 const BoltIcon = ({ className = 'size-4' }: { className?: string }) => (
   <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden>
     <path d="M13 2 4.5 13.5H11L9.5 22 19 10h-6.5L13 2Z" />
+  </svg>
+)
+
+const CloseIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="size-5" aria-hidden>
+    <path d="M6 6l12 12M18 6 6 18" />
   </svg>
 )
 
@@ -218,73 +224,170 @@ function Hero() {
 
 /* ---------- projects ---------- */
 
-function ProjectThumb({ project }: { project: Project }) {
-  const cls = 'size-24 shrink-0 rounded-2xl object-cover ring-1 ring-white/10 sm:size-28'
-  if (project.media.type === 'video') {
+function MediaView({ media, className, active = true }: { media: Media; className: string; active?: boolean }) {
+  if (media.type === 'video') {
     return (
       <video
-        className={cls}
-        src={project.media.src}
-        poster={project.media.poster}
-        autoPlay
+        key={media.src + (active ? '-on' : '-off')}
+        className={className}
+        src={media.src}
+        poster={media.poster}
+        autoPlay={active}
         muted
         loop
         playsInline
-        aria-hidden
+        controls={false}
+        aria-label={media.caption ?? 'Video'}
       />
     )
   }
-  if (project.media.type === 'logo') {
-    return (
-      <div className={`${cls} flex items-center justify-center bg-gradient-to-br from-[#4e342e] to-[#212121] p-4`}>
-        <img src={project.media.src} alt="" className="max-h-full max-w-full object-contain" loading="lazy" />
-      </div>
-    )
-  }
-  return <img src={project.media.src} alt="" className={cls} loading="lazy" width={560} height={560} />
+  return <img src={media.src} alt={media.caption ?? ''} className={className} loading="lazy" />
 }
 
-function ProjectRow({ project }: { project: Project }) {
-  const inner = (
-    <>
-      <ProjectThumb project={project} />
+function ProjectRow({ project, onOpen }: { project: Project; onOpen: () => void }) {
+  return (
+    <button type="button" onClick={onOpen} className="group relative flex w-full items-center gap-6 text-left">
+      <MediaView media={project.thumb} className="size-24 shrink-0 rounded-2xl object-cover ring-1 ring-white/10 sm:size-28" />
       <div className="min-w-0 pr-14">
         <h3 className="text-[22px] font-bold text-white sm:text-2xl">{project.title}</h3>
         <p className="mt-1 text-sm text-neutral-500">{project.subtitle}</p>
-        {project.status && (
-          <span className="mt-3 inline-block rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-neutral-300">
-            {project.status}
-          </span>
-        )}
-      </div>
-      {project.href && (
-        <span className="absolute top-1 right-0 text-orange transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
-          <ArrowUpRight />
+        <span className="mt-3 inline-block rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-neutral-400 transition group-hover:border-orange/40 group-hover:text-orange">
+          View project — photos, video & details
         </span>
-      )}
-    </>
+      </div>
+      <span className="absolute top-1 right-0 text-orange transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
+        <ArrowUpRight />
+      </span>
+    </button>
   )
-  const cls = 'group relative flex items-center gap-6'
-  return project.href ? (
-    <a href={project.href} target="_blank" rel="noreferrer" className={cls}>
-      {inner}
-    </a>
-  ) : (
-    <div className={cls}>{inner}</div>
+}
+
+function ProjectModal({ project, onClose }: { project: Project; onClose: () => void }) {
+  const [idx, setIdx] = useState(0)
+  const current = project.gallery[idx]
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', onKey)
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.removeEventListener('keydown', onKey)
+      document.body.style.overflow = ''
+    }
+  }, [onClose])
+
+  return (
+    <div
+      className="fixed inset-0 z-100 overflow-y-auto bg-black/75 p-4 backdrop-blur-sm sm:p-8"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label={project.title}
+    >
+      <div
+        className="mx-auto max-w-3xl rounded-3xl border border-white/10 bg-[#1b1b1b] p-6 sm:p-10"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="mb-6 flex items-start justify-between gap-4">
+          <div>
+            <h3 className="text-3xl font-extrabold tracking-tight text-white uppercase">{project.title}</h3>
+            <p className="mt-1 text-sm text-neutral-500">{project.subtitle}</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="rounded-full border border-white/10 p-2 text-neutral-400 transition hover:border-white/30 hover:text-white"
+          >
+            <CloseIcon />
+          </button>
+        </div>
+
+        <div className="overflow-hidden rounded-2xl bg-black ring-1 ring-white/10">
+          <MediaView media={current} className="mx-auto max-h-105 w-full object-contain" />
+        </div>
+        {current.caption && <p className="mt-2 text-center text-xs text-neutral-500">{current.caption}</p>}
+
+        {project.gallery.length > 1 && (
+          <div className="mt-4 flex flex-wrap gap-3">
+            {project.gallery.map((m, i) => (
+              <button
+                key={m.src}
+                type="button"
+                onClick={() => setIdx(i)}
+                aria-label={m.caption ?? `Media ${i + 1}`}
+                className={`overflow-hidden rounded-xl ring-2 transition ${
+                  i === idx ? 'ring-orange' : 'ring-white/10 hover:ring-white/30'
+                }`}
+              >
+                <MediaView media={m} active={false} className="size-16 object-cover sm:size-20" />
+              </button>
+            ))}
+          </div>
+        )}
+
+        <div className="mt-8 space-y-4">
+          {project.description.map((p, i) => (
+            <p key={i} className="text-[15px] leading-relaxed text-neutral-400">
+              {p}
+            </p>
+          ))}
+        </div>
+
+        <p className="mt-6 text-sm text-neutral-500">
+          <span className="font-semibold text-orange">Role:</span> {project.role}
+        </p>
+
+        <div className="mt-4 flex flex-wrap gap-2">
+          {project.tags.map((t) => (
+            <span key={t} className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-neutral-300">
+              {t}
+            </span>
+          ))}
+        </div>
+
+        <div className="mt-8 flex flex-wrap gap-3">
+          {project.live && (
+            <a
+              href={project.live}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 rounded-full bg-orange px-6 py-3 text-sm font-semibold text-white transition hover:brightness-110"
+            >
+              Live site <ArrowUpRight className="size-4" />
+            </a>
+          )}
+          {project.repo && (
+            <a
+              href={project.repo}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 rounded-full border border-white/15 px-6 py-3 text-sm font-semibold text-white transition hover:border-white/40"
+            >
+              <GithubIcon className="size-4" /> Code & README
+            </a>
+          )}
+        </div>
+      </div>
+    </div>
   )
 }
 
 function Projects() {
+  const [selected, setSelected] = useState<Project | null>(null)
   return (
     <section id="projects" className="scroll-mt-28 pt-28">
       <Heading line1="Recent" line2="Projects" />
       <div className="space-y-12">
         {projects.map((p, i) => (
           <Reveal key={p.title} delay={i * 60}>
-            <ProjectRow project={p} />
+            <ProjectRow project={p} onOpen={() => setSelected(p)} />
           </Reveal>
         ))}
       </div>
+      {selected && <ProjectModal project={selected} onClose={() => setSelected(null)} />}
     </section>
   )
 }
