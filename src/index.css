@@ -1,11 +1,13 @@
 @import 'tailwindcss';
 
 @theme {
-  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
-  --font-serif: 'Instrument Serif', Georgia, serif;
-  --color-ink: #0b0b0f;
-  --color-surface: #15151b;
-  --color-accent: #fbbf24;
+  --font-sans: 'Poppins', ui-sans-serif, system-ui, sans-serif;
+  --color-ink: #161616;
+  --color-panel: #1e1e1e;
+  --color-field: #242424;
+  --color-dim: #3f3f42;
+  --color-orange: #ff5227;
+  --color-lime: #d9ff3f;
 }
 
 html {
@@ -13,18 +15,12 @@ html {
 }
 
 body {
-  @apply bg-ink font-sans text-zinc-400 antialiased;
+  @apply bg-ink font-sans text-neutral-400 antialiased;
 }
 
 ::selection {
-  background: #fbbf24;
-  color: #0b0b0f;
-}
-
-.serif-accent {
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-weight: 400;
+  background: #ff5227;
+  color: #fff;
 }
 
 /* Scroll-reveal */
