@@ -155,10 +155,17 @@ export const projects: Project[] = [
     subtitle: 'Mobile subscription platform — React Native, Stripe (BSc thesis)',
     thumb: { type: 'image', src: '/projects/coffeeshare.jpg' },
     gallery: [
-      { type: 'image', src: '/projects/cs-real-welcome.jpg', caption: 'Onboarding — the app running (QR check-in intro)' },
-      { type: 'image', src: '/projects/cs-real-login.jpg', caption: 'Login — "Bine ai revenit!"' },
-      { type: 'image', src: '/projects/cs-real-register.jpg', caption: 'Account creation' },
-      { type: 'image', src: '/projects/cs-real-forgot_password.jpg', caption: 'Password reset flow' },
+      {
+        type: 'video',
+        src: '/projects/cs-app-tour.mp4',
+        poster: '/projects/cs-tour-poster.jpg',
+        caption: 'App tour — login, dashboard, subscriptions, profile & QR (demo account)',
+      },
+      { type: 'image', src: '/projects/cs-real-dashboard.jpg', caption: 'User dashboard — subscription status, favorite cafés, activity' },
+      { type: 'image', src: '/projects/cs-real-profile.jpg', caption: 'Profile & account settings' },
+      { type: 'image', src: '/projects/cs-real-subscriptions.jpg', caption: 'Subscription plans screen' },
+      { type: 'image', src: '/projects/cs-real-qr.jpg', caption: 'QR check-in — gated until a plan is active' },
+      { type: 'image', src: '/projects/cs-real-welcome.jpg', caption: 'Onboarding — QR check-in intro' },
     ],
     description: [
       'CoffeeShare is a coffee-subscription platform built as my bachelor’s thesis: subscribe in the app, find partner cafés on the map, check in with a QR code and the cup is logged in real time.',
