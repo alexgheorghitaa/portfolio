@@ -1,32 +1,29 @@
-# React + TypeScript + Vite
+# Alexandru Gheorghiță — Portfolio
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+**Live: [alexandru-gheorghita.vercel.app](https://alexandru-gheorghita.vercel.app)**
 
-Currently, two official plugins are available:
+Personal portfolio — full-stack + LLM developer. Dark, editorial design with serif accents, scroll-reveal animations, and an embedded product demo for [MesterLink](https://www.mesterlink.md), the production marketplace I built end-to-end.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Stack
 
-## React Compiler
+- **Vite 8** + **React 19** + **TypeScript**
+- **Tailwind CSS 4** (CSS-first config via `@theme`)
+- Zero UI libraries — hand-rolled components, `IntersectionObserver` scroll reveals with reduced-motion and no-IO fallbacks
+- Deployed on **Vercel**, auto-deploys from `main`
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Structure
 
-## Expanding the Oxlint configuration
+All content lives in [`src/data.ts`](src/data.ts) — profile, projects, experience, and stack are plain typed objects; the components in [`src/App.tsx`](src/App.tsx) just render them. To update the site, edit `data.ts` and push.
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+## Local dev
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm install
+npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+## Build
+
+```bash
+npm run build && npm run preview
+```
