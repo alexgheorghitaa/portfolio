@@ -91,6 +91,30 @@ export const projects: Project[] = [
     live: 'https://www.mesterlink.md',
   },
   {
+    title: 'ResoLab',
+    subtitle: 'Browser audio workstation — React + Rust/WASM DSP engine',
+    thumb: { type: 'video', src: '/projects/resolab-demo.mp4', poster: '/projects/resolab-demo-poster.jpg' },
+    gallery: [
+      {
+        type: 'video',
+        src: '/projects/resolab-demo.mp4',
+        poster: '/projects/resolab-demo-poster.jpg',
+        caption: 'Live demo — parametric EQ, compressor & real-time spectrum during playback',
+      },
+      { type: 'image', src: '/projects/resolab-editor.jpg', caption: 'Mastering chain preset on a drum loop — EQ curve, LUFS metering' },
+      { type: 'image', src: '/projects/resolab-effects.jpg', caption: 'Effect rack — EQ bands, dynamics, signal suggestions' },
+      { type: 'image', src: '/projects/resolab-app.jpg', caption: 'Guided onboarding — interactive tutorial & keyboard shortcuts' },
+    ],
+    description: [
+      'ResoLab is an educational mini-DAW that runs entirely in the browser: load a track, build an effect chain (parametric EQ, compressor, reverb, saturation, limiter and more), hear it process in real time, and export the result as WAV.',
+      'The DSP engine is written in Rust and compiled to WebAssembly, running inside an AudioWorklet for glitch-free real-time audio. The UI adds factory & custom presets, LUFS/peak metering, spectrum and spectrogram analyzers, region editing, A/B bypass and a guided tutorial — in Romanian and English.',
+      'I handled build & release engineering: the Rust→WASM build pipeline, cross-origin isolation headers (COOP/COEP) required by the audio engine, and the Vercel production setup with auto-deploys.',
+    ],
+    role: 'Build & deployment — Rust/WASM pipeline, production hosting (team project)',
+    tags: ['React 19', 'TypeScript', 'Rust', 'WebAssembly', 'AudioWorklet', 'Web Audio', 'Zustand', 'Vite'],
+    live: 'https://resolab-app.vercel.app',
+  },
+  {
     title: 'FinTrack',
     subtitle: 'Personal finance dashboard — Next.js 16, Prisma, AI daily tips',
     thumb: { type: 'image', src: '/projects/fintrack.jpg' },
@@ -131,10 +155,10 @@ export const projects: Project[] = [
     subtitle: 'Mobile subscription platform — React Native, Stripe (BSc thesis)',
     thumb: { type: 'image', src: '/projects/coffeeshare.jpg' },
     gallery: [
-      { type: 'image', src: '/projects/cs-subscribe.jpg', caption: 'Subscribe once — coffee across partner cafés' },
-      { type: 'image', src: '/projects/cs-map.jpg', caption: 'Partner cafés on an interactive map' },
-      { type: 'image', src: '/projects/cs-qr.jpg', caption: 'QR check-in — signed, short-lived codes' },
-      { type: 'image', src: '/projects/cs-cafe.jpg', caption: 'Coffee membership, in the real world' },
+      { type: 'image', src: '/projects/cs-real-welcome.jpg', caption: 'Onboarding — the app running (QR check-in intro)' },
+      { type: 'image', src: '/projects/cs-real-login.jpg', caption: 'Login — "Bine ai revenit!"' },
+      { type: 'image', src: '/projects/cs-real-register.jpg', caption: 'Account creation' },
+      { type: 'image', src: '/projects/cs-real-forgot_password.jpg', caption: 'Password reset flow' },
     ],
     description: [
       'CoffeeShare is a coffee-subscription platform built as my bachelor’s thesis: subscribe in the app, find partner cafés on the map, check in with a QR code and the cup is logged in real time.',
