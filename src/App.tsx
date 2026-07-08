@@ -558,11 +558,22 @@ export default function App() {
       <div className="grid gap-14 lg:grid-cols-[370px_1fr] lg:gap-20">
         <ProfileCard />
         <main key={view} className="min-w-0">
-          {view === 'top' && <Hero />}
-          {view === 'projects' && <Projects />}
-          {view === 'experience' && <ExperienceSection />}
-          {view === 'tools' && <Tools />}
-          {view === 'contact' && <Contact />}
+          {view === 'top' ? (
+            <div className="space-y-24">
+              <Hero />
+              <Projects />
+              <ExperienceSection />
+              <Tools />
+              <Contact />
+            </div>
+          ) : (
+            <>
+              {view === 'projects' && <Projects />}
+              {view === 'experience' && <ExperienceSection />}
+              {view === 'tools' && <Tools />}
+              {view === 'contact' && <Contact />}
+            </>
+          )}
         </main>
       </div>
       <footer className="mt-28 border-t border-white/5 pt-8 text-center text-sm text-neutral-600">
