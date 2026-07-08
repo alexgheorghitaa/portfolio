@@ -250,125 +250,142 @@ function CardBack({ onFlip }: { onFlip: () => void }) {
   )
 }
 
+function FlipInner({ flipped, setFlipped }: { flipped: boolean; setFlipped: (v: boolean) => void }) {
+  return (
+    <div
+      className="relative transition-transform duration-500"
+      style={{ transformStyle: 'preserve-3d', transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
+    >
+      <div style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}>
+        <CardFront onFlip={() => setFlipped(true)} />
+      </div>
+      <div
+        className="absolute inset-0"
+        style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
+      >
+        <CardBack onFlip={() => setFlipped(false)} />
+      </div>
+    </div>
+  )
+}
+
 function LanyardCard() {
-  const swingRef = useRef<HTMLDivElement>(null)
-  const strapRef = useRef<HTMLDivElement>(null)
-  const pinRef = useRef<HTMLDivElement>(null)
+  const asideRef = useRef<HTMLElement>(null)
+  const cardRef = useRef<HTMLDivElement>(null)
+  const lineRef = useRef<SVGLineElement>(null)
   const [flipped, setFlipped] = useState(false)
 
-  // physics state (kept in refs so the rAF loop never triggers re-renders)
-  const theta = useRef(0.12)
+  // physics kept in refs so the rAF loop never triggers React re-renders
+  const theta = useRef(0)
   const omega = useRef(0)
-  const drag = useRef<{ active: boolean; prevT: number; last: number }>({ active: false, prevT: 0.12, last: 0 })
+  const drag = useRef({ active: false, prevT: 0 })
 
   useEffect(() => {
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    const BASE_L = 46
-    const MAX_EXTRA = 150
-    const K = 20 // pendulum stiffness
-    const D = 1.3 // damping
+    let desktop = window.matchMedia('(min-width: 1024px)').matches
+    const onResize = () => {
+      desktop = window.matchMedia('(min-width: 1024px)').matches
+    }
+    window.addEventListener('resize', onResize)
+
+    const CARD_TOP = 100 // viewport y of the card top at rest — stays put on scroll
+    const LP = 46 // short pivot distance above the card → tight, contained swing
+    const PIVOT_Y = CARD_TOP - LP
+    const CAP = 0.2 // max swing angle (rad): the card can NEVER be flung across the page
+    const K = 24 // pendulum stiffness
+    const D = 1.5 // damping → always settles back to the same rest spot
     let raf = 0
     let prev = 0
 
-    const pivot = () => {
-      const el = pinRef.current
-      if (!el) return { x: 0, y: 0 }
-      const r = el.getBoundingClientRect()
-      return { x: r.left + r.width / 2, y: r.top + r.height / 2 }
+    const centerX = () => {
+      const r = asideRef.current?.getBoundingClientRect()
+      return r ? r.left + r.width / 2 : window.innerWidth / 2
     }
 
     const onMove = (e: PointerEvent) => {
       if (!drag.current.active) return
-      const p = pivot()
-      let t = Math.atan2(e.clientX - p.x, Math.max(e.clientY - p.y, 1))
-      t = Math.max(-1.35, Math.min(1.35, t))
-      theta.current = t
+      const cx = centerX()
+      const t = Math.atan2(e.clientX - cx, Math.max(e.clientY - PIVOT_Y, 1))
+      theta.current = Math.max(-CAP, Math.min(CAP, t))
     }
     const onUp = () => {
       drag.current.active = false
       document.body.style.userSelect = ''
     }
     const onDown = (e: PointerEvent) => {
-      const target = e.target as HTMLElement
-      if (target.closest('a,button,input,textarea,select,label')) return
+      const el = e.target as HTMLElement
+      if (el.closest('a,button,input,textarea,select,label')) return
       drag.current.active = true
       drag.current.prevT = theta.current
-      drag.current.last = e.timeStamp
       document.body.style.userSelect = 'none'
     }
-
-    const badge = swingRef.current
-    badge?.addEventListener('pointerdown', onDown)
+    const card = cardRef.current
+    card?.addEventListener('pointerdown', onDown)
     window.addEventListener('pointermove', onMove)
     window.addEventListener('pointerup', onUp)
 
     const tick = (now: number) => {
       const dt = Math.min((now - (prev || now)) / 1000, 0.033)
       prev = now
-
-      // strap grows with scroll → the "continuous vertical line" effect
-      const L = BASE_L + Math.min(window.scrollY * 0.16, MAX_EXTRA)
-      if (strapRef.current) strapRef.current.style.height = `${L}px`
-
-      if (drag.current.active) {
-        // throw velocity from how fast the pointer swings the card
-        if (dt > 0) omega.current = Math.max(-9, Math.min(9, (theta.current - drag.current.prevT) / dt))
-        drag.current.prevT = theta.current
-      } else if (!reduce) {
-        const alpha = -K * Math.sin(theta.current) - D * omega.current
-        omega.current += alpha * dt
-        theta.current += omega.current * dt
-      } else {
-        theta.current += (0 - theta.current) * 0.2
-        omega.current = 0
+      if (desktop) {
+        if (drag.current.active) {
+          if (dt > 0) omega.current = Math.max(-8, Math.min(8, (theta.current - drag.current.prevT) / dt))
+          drag.current.prevT = theta.current
+        } else if (!reduce) {
+          const a = -K * Math.sin(theta.current) - D * omega.current
+          omega.current += a * dt
+          theta.current += omega.current * dt
+        } else {
+          theta.current += (0 - theta.current) * 0.25
+          omega.current = 0
+        }
+        const cx = centerX()
+        const topX = cx + LP * Math.sin(theta.current)
+        const topY = PIVOT_Y + LP * Math.cos(theta.current)
+        if (cardRef.current)
+          cardRef.current.style.transform = `translate(${topX}px, ${topY}px) translateX(-50%) rotate(${theta.current}rad)`
+        if (lineRef.current) {
+          const l = lineRef.current
+          l.setAttribute('x1', String(cx))
+          l.setAttribute('y1', String(Math.min(-window.scrollY, topY - 6))) // top recedes off-screen as you scroll
+          l.setAttribute('x2', String(topX))
+          l.setAttribute('y2', String(topY))
+        }
       }
-
-      if (swingRef.current) swingRef.current.style.transform = `rotate(${theta.current}rad)`
       raf = requestAnimationFrame(tick)
     }
     raf = requestAnimationFrame(tick)
 
     return () => {
       cancelAnimationFrame(raf)
-      badge?.removeEventListener('pointerdown', onDown)
+      window.removeEventListener('resize', onResize)
+      card?.removeEventListener('pointerdown', onDown)
       window.removeEventListener('pointermove', onMove)
       window.removeEventListener('pointerup', onUp)
     }
   }, [])
 
   return (
-    <aside className="self-start lg:sticky lg:top-24">
-      <div className="relative flex justify-center overflow-visible pt-1">
-        <div ref={swingRef} className="flex flex-col items-center will-change-transform" style={{ transformOrigin: 'top center' }}>
-          {/* pin at the pivot */}
-          <div ref={pinRef} className="relative z-10 size-4 rounded-full border-[3px] border-neutral-500 bg-neutral-800" />
-          {/* lanyard strap */}
-          <div
-            ref={strapRef}
-            className="w-[7px] rounded-full bg-gradient-to-b from-orange to-orange/60 shadow-[0_0_0_1px_rgba(0,0,0,0.06)]"
-            style={{ height: 46 }}
-          />
-          {/* clip */}
-          <div className="-mt-px flex h-4 w-8 items-center justify-center rounded-b-md rounded-t-sm bg-neutral-300">
-            <div className="h-2 w-5 rounded-full bg-neutral-400" />
-          </div>
-          {/* badge (flip container) */}
-          <div className="mt-1 w-[300px] max-w-[82vw] cursor-grab touch-none active:cursor-grabbing" style={{ perspective: '1400px' }}>
-            <div
-              className="relative transition-transform duration-500"
-              style={{ transformStyle: 'preserve-3d', transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
-            >
-              <div style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}>
-                <CardFront onFlip={() => setFlipped(true)} />
-              </div>
-              <div
-                className="absolute inset-0"
-                style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
-              >
-                <CardBack onFlip={() => setFlipped(false)} />
-              </div>
-            </div>
-          </div>
+    <aside ref={asideRef} className="self-start">
+      {/* mobile: a normal flip card in flow (no physics — safe on narrow screens) */}
+      <div className="mx-auto w-[300px] max-w-[82vw] lg:hidden" style={{ perspective: '1400px' }}>
+        <FlipInner flipped={flipped} setFlipped={setFlipped} />
+      </div>
+
+      {/* desktop: fixed lanyard overlay — the card stays put, swings on an anchored string,
+          and lives outside document flow so throwing it never shifts the page or adds scrollbars */}
+      <div className="pointer-events-none fixed inset-0 z-30 hidden lg:block">
+        <svg className="absolute inset-0 h-full w-full" aria-hidden>
+          <line ref={lineRef} x1="0" y1="0" x2="0" y2="0" stroke="#ff5227" strokeWidth="6" strokeLinecap="round" />
+        </svg>
+        <div
+          ref={cardRef}
+          className="pointer-events-auto absolute top-0 left-0 w-[300px] cursor-grab touch-none will-change-transform active:cursor-grabbing"
+          style={{ transformOrigin: 'top center', perspective: '1400px' }}
+        >
+          {/* clip where the string meets the card */}
+          <div className="absolute -top-2 left-1/2 h-3 w-7 -translate-x-1/2 rounded-t-sm rounded-b-md bg-neutral-300" />
+          <FlipInner flipped={flipped} setFlipped={setFlipped} />
         </div>
       </div>
     </aside>

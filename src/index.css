@@ -14,6 +14,11 @@ html {
   background: var(--color-ink);
 }
 
+/* the fixed lanyard badge can swing slightly past the left edge — never show a horizontal scrollbar */
+body {
+  overflow-x: hidden;
+}
+
 body {
   @apply bg-ink font-sans text-neutral-400 antialiased;
 }
