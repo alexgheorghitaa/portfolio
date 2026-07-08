@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { profile, projects, experiences, tools, type Project, type Media } from './data'
 import { Reveal } from './Reveal'
 
@@ -128,38 +128,247 @@ function Nav({ view }: { view: View }) {
   )
 }
 
-/* ---------- profile card ---------- */
+/* ---------- lanyard profile card ---------- */
 
-function ProfileCard() {
+const FlipIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="size-4" aria-hidden>
+    <path d="M3 12a9 9 0 0 1 15-6.7L21 8" />
+    <path d="M21 3v5h-5" />
+    <path d="M21 12a9 9 0 0 1-15 6.7L3 16" />
+    <path d="M3 21v-5h5" />
+  </svg>
+)
+
+/** The exact profile card — unchanged. */
+function CardFront({ onFlip }: { onFlip: () => void }) {
   return (
-    <aside className="self-start lg:sticky lg:top-28">
-      <div className="mx-auto max-w-sm rounded-3xl bg-white p-6 text-center">
-        <img
-          src="/avatar.jpg"
-          alt={profile.name}
-          className="aspect-square w-full rounded-2xl object-cover"
-          width={460}
-          height={460}
+    <div className="relative flex h-full flex-col rounded-3xl bg-white p-6 text-center">
+      <img
+        src="/avatar.jpg"
+        alt={profile.name}
+        className="pointer-events-none aspect-square w-full rounded-2xl object-cover select-none"
+        width={460}
+        height={460}
+        draggable={false}
+      />
+      <h2 className="mt-6 text-[27px] font-bold tracking-tight text-neutral-900">{profile.name}</h2>
+      <div className="my-4 flex items-center justify-center gap-3" aria-hidden>
+        <span className="h-px w-10 border-t border-dashed border-orange" />
+        <span className="flex size-8 items-center justify-center rounded-full bg-orange text-white">
+          <BoltIcon />
+        </span>
+        <span className="h-px w-10 border-t border-dashed border-orange" />
+      </div>
+      <p className="text-[15px] leading-relaxed text-neutral-500">{profile.cardBio}</p>
+      <div className="mt-6 flex items-center justify-center gap-5 text-orange">
+        <a href={profile.github} target="_blank" rel="noreferrer" aria-label="GitHub" className="transition hover:opacity-70">
+          <GithubIcon className="size-6" />
+        </a>
+        <a href={profile.linkedin} target="_blank" rel="noreferrer" aria-label="LinkedIn" className="transition hover:opacity-70">
+          <LinkedinIcon className="size-6" />
+        </a>
+        <a href={`mailto:${profile.email}`} aria-label="Email" className="transition hover:opacity-70">
+          <MailIcon className="size-6" />
+        </a>
+      </div>
+      <button
+        type="button"
+        onClick={onFlip}
+        onPointerDown={(e) => e.stopPropagation()}
+        aria-label="Flip card"
+        title="Flip"
+        className="absolute right-4 bottom-4 flex size-9 items-center justify-center rounded-full bg-neutral-100 text-neutral-500 transition hover:bg-orange hover:text-white"
+      >
+        <FlipIcon />
+      </button>
+    </div>
+  )
+}
+
+/** Back of the badge — marketing pitch + quick contact form. */
+function CardBack({ onFlip }: { onFlip: () => void }) {
+  const [sent, setSent] = useState(false)
+  function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    const data = new FormData(e.currentTarget)
+    const name = String(data.get('name') ?? '')
+    const email = String(data.get('email') ?? '')
+    const message = String(data.get('message') ?? '')
+    const subject = encodeURIComponent(`Project inquiry — ${name}`)
+    const body = encodeURIComponent(`${message}\n\n— ${name} (${email})`)
+    window.location.href = `mailto:${profile.email}?subject=${subject}&body=${body}`
+    setSent(true)
+  }
+  const field =
+    'w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 outline-none transition focus:border-orange'
+  return (
+    <div className="relative flex h-full flex-col rounded-3xl bg-white p-6">
+      <p className="text-[11px] font-semibold tracking-widest text-orange uppercase">Let&apos;s work together</p>
+      <h3 className="mt-1 text-xl leading-tight font-extrabold text-neutral-900">
+        Have a project? <br />I ship it — fast &amp; tested.
+      </h3>
+      <p className="mt-2 text-[13px] leading-relaxed text-neutral-500">
+        Freelance or full-time. Production web apps &amp; AI tools, end-to-end.
+      </p>
+      <form onSubmit={onSubmit} className="mt-4 flex flex-1 flex-col gap-2.5">
+        <input name="name" required placeholder="Your name" className={field} onPointerDown={(e) => e.stopPropagation()} />
+        <input name="email" type="email" required placeholder="your@email.com" className={field} onPointerDown={(e) => e.stopPropagation()} />
+        <textarea
+          name="message"
+          required
+          rows={2}
+          placeholder="What do you need built?"
+          className={`${field} flex-1 resize-none`}
+          onPointerDown={(e) => e.stopPropagation()}
         />
-        <h2 className="mt-6 text-[27px] font-bold tracking-tight text-neutral-900">{profile.name}</h2>
-        <div className="my-4 flex items-center justify-center gap-3" aria-hidden>
-          <span className="h-px w-10 border-t border-dashed border-orange" />
-          <span className="flex size-8 items-center justify-center rounded-full bg-orange text-white">
-            <BoltIcon />
-          </span>
-          <span className="h-px w-10 border-t border-dashed border-orange" />
-        </div>
-        <p className="text-[15px] leading-relaxed text-neutral-500">{profile.cardBio}</p>
-        <div className="mt-6 flex items-center justify-center gap-5 text-orange">
-          <a href={profile.github} target="_blank" rel="noreferrer" aria-label="GitHub" className="transition hover:opacity-70">
-            <GithubIcon className="size-6" />
-          </a>
-          <a href={profile.linkedin} target="_blank" rel="noreferrer" aria-label="LinkedIn" className="transition hover:opacity-70">
-            <LinkedinIcon className="size-6" />
-          </a>
-          <a href={`mailto:${profile.email}`} aria-label="Email" className="transition hover:opacity-70">
-            <MailIcon className="size-6" />
-          </a>
+        <button
+          type="submit"
+          onPointerDown={(e) => e.stopPropagation()}
+          className="rounded-lg bg-orange py-2.5 text-sm font-semibold text-white transition hover:brightness-110"
+        >
+          {sent ? 'Opening your email…' : 'Send message'}
+        </button>
+        <a
+          href="#contact"
+          onPointerDown={(e) => e.stopPropagation()}
+          className="text-center text-xs font-medium text-neutral-500 underline decoration-neutral-300 underline-offset-2 transition hover:text-orange"
+        >
+          or open the full contact form →
+        </a>
+      </form>
+      <button
+        type="button"
+        onClick={onFlip}
+        onPointerDown={(e) => e.stopPropagation()}
+        aria-label="Flip card back"
+        title="Flip"
+        className="absolute top-4 right-4 flex size-9 items-center justify-center rounded-full bg-neutral-100 text-neutral-500 transition hover:bg-orange hover:text-white"
+      >
+        <FlipIcon />
+      </button>
+    </div>
+  )
+}
+
+function LanyardCard() {
+  const swingRef = useRef<HTMLDivElement>(null)
+  const strapRef = useRef<HTMLDivElement>(null)
+  const pinRef = useRef<HTMLDivElement>(null)
+  const [flipped, setFlipped] = useState(false)
+
+  // physics state (kept in refs so the rAF loop never triggers re-renders)
+  const theta = useRef(0.12)
+  const omega = useRef(0)
+  const drag = useRef<{ active: boolean; prevT: number; last: number }>({ active: false, prevT: 0.12, last: 0 })
+
+  useEffect(() => {
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const BASE_L = 46
+    const MAX_EXTRA = 150
+    const K = 20 // pendulum stiffness
+    const D = 1.3 // damping
+    let raf = 0
+    let prev = 0
+
+    const pivot = () => {
+      const el = pinRef.current
+      if (!el) return { x: 0, y: 0 }
+      const r = el.getBoundingClientRect()
+      return { x: r.left + r.width / 2, y: r.top + r.height / 2 }
+    }
+
+    const onMove = (e: PointerEvent) => {
+      if (!drag.current.active) return
+      const p = pivot()
+      let t = Math.atan2(e.clientX - p.x, Math.max(e.clientY - p.y, 1))
+      t = Math.max(-1.35, Math.min(1.35, t))
+      theta.current = t
+    }
+    const onUp = () => {
+      drag.current.active = false
+      document.body.style.userSelect = ''
+    }
+    const onDown = (e: PointerEvent) => {
+      const target = e.target as HTMLElement
+      if (target.closest('a,button,input,textarea,select,label')) return
+      drag.current.active = true
+      drag.current.prevT = theta.current
+      drag.current.last = e.timeStamp
+      document.body.style.userSelect = 'none'
+    }
+
+    const badge = swingRef.current
+    badge?.addEventListener('pointerdown', onDown)
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+
+    const tick = (now: number) => {
+      const dt = Math.min((now - (prev || now)) / 1000, 0.033)
+      prev = now
+
+      // strap grows with scroll → the "continuous vertical line" effect
+      const L = BASE_L + Math.min(window.scrollY * 0.16, MAX_EXTRA)
+      if (strapRef.current) strapRef.current.style.height = `${L}px`
+
+      if (drag.current.active) {
+        // throw velocity from how fast the pointer swings the card
+        if (dt > 0) omega.current = Math.max(-9, Math.min(9, (theta.current - drag.current.prevT) / dt))
+        drag.current.prevT = theta.current
+      } else if (!reduce) {
+        const alpha = -K * Math.sin(theta.current) - D * omega.current
+        omega.current += alpha * dt
+        theta.current += omega.current * dt
+      } else {
+        theta.current += (0 - theta.current) * 0.2
+        omega.current = 0
+      }
+
+      if (swingRef.current) swingRef.current.style.transform = `rotate(${theta.current}rad)`
+      raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+
+    return () => {
+      cancelAnimationFrame(raf)
+      badge?.removeEventListener('pointerdown', onDown)
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+    }
+  }, [])
+
+  return (
+    <aside className="self-start lg:sticky lg:top-24">
+      <div className="relative flex justify-center overflow-visible pt-1">
+        <div ref={swingRef} className="flex flex-col items-center will-change-transform" style={{ transformOrigin: 'top center' }}>
+          {/* pin at the pivot */}
+          <div ref={pinRef} className="relative z-10 size-4 rounded-full border-[3px] border-neutral-500 bg-neutral-800" />
+          {/* lanyard strap */}
+          <div
+            ref={strapRef}
+            className="w-[7px] rounded-full bg-gradient-to-b from-orange to-orange/60 shadow-[0_0_0_1px_rgba(0,0,0,0.06)]"
+            style={{ height: 46 }}
+          />
+          {/* clip */}
+          <div className="-mt-px flex h-4 w-8 items-center justify-center rounded-b-md rounded-t-sm bg-neutral-300">
+            <div className="h-2 w-5 rounded-full bg-neutral-400" />
+          </div>
+          {/* badge (flip container) */}
+          <div className="mt-1 w-[300px] max-w-[82vw] cursor-grab touch-none active:cursor-grabbing" style={{ perspective: '1400px' }}>
+            <div
+              className="relative transition-transform duration-500"
+              style={{ transformStyle: 'preserve-3d', transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
+            >
+              <div style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}>
+                <CardFront onFlip={() => setFlipped(true)} />
+              </div>
+              <div
+                className="absolute inset-0"
+                style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
+              >
+                <CardBack onFlip={() => setFlipped(false)} />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </aside>
@@ -556,7 +765,7 @@ export default function App() {
     <div className="mx-auto max-w-[1150px] px-5 pt-28 pb-16 lg:pt-32">
       <Nav view={view} />
       <div className="grid gap-14 lg:grid-cols-[370px_1fr] lg:gap-20">
-        <ProfileCard />
+        <LanyardCard />
         <main key={view} className="min-w-0">
           {view === 'top' ? (
             <div className="space-y-24">
