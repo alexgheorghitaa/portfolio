@@ -2,6 +2,29 @@ import { useEffect, useState } from 'react'
 import { profile, projects, experiences, tools, type Project, type Media } from './data'
 import { Reveal } from './Reveal'
 
+/* ---------- view routing (hash-based page switching) ---------- */
+
+const VIEWS = ['top', 'projects', 'experience', 'tools', 'contact'] as const
+type View = (typeof VIEWS)[number]
+
+function viewFromHash(hash: string): View {
+  const raw = hash.replace(/^#/, '')
+  if (raw === '' || raw === 'top') return 'top'
+  return (VIEWS as readonly string[]).includes(raw) ? (raw as View) : 'top'
+}
+
+function useHashView(): View {
+  const [view, setView] = useState<View>(() =>
+    viewFromHash(typeof window !== 'undefined' ? window.location.hash : ''),
+  )
+  useEffect(() => {
+    const onHash = () => setView(viewFromHash(window.location.hash))
+    window.addEventListener('hashchange', onHash)
+    return () => window.removeEventListener('hashchange', onHash)
+  }, [])
+  return view
+}
+
 /* ---------- small icons ---------- */
 
 const GithubIcon = ({ className = 'size-5' }: { className?: string }) => (
@@ -72,28 +95,34 @@ const PenIcon = () => (
   </svg>
 )
 
-function Nav() {
-  const items: [string, string, () => React.ReactElement][] = [
-    ['Home', '#top', HomeIcon],
-    ['Projects', '#projects', FolderIcon],
-    ['Experience', '#experience', CaseIcon],
-    ['Tools', '#tools', WrenchIcon],
-    ['Contact', '#contact', PenIcon],
+function Nav({ view }: { view: View }) {
+  const items: [string, string, View, () => React.ReactElement][] = [
+    ['Home', '#top', 'top', HomeIcon],
+    ['Projects', '#projects', 'projects', FolderIcon],
+    ['Experience', '#experience', 'experience', CaseIcon],
+    ['Tools', '#tools', 'tools', WrenchIcon],
+    ['Contact', '#contact', 'contact', PenIcon],
   ]
   return (
     <header className="fixed top-5 left-1/2 z-50 -translate-x-1/2">
       <nav className="flex items-center gap-1 rounded-2xl border border-white/10 bg-[#1c1c1c]/95 px-2 py-2 shadow-xl shadow-black/40 backdrop-blur-md">
-        {items.map(([label, href, Icon]) => (
-          <a
-            key={href}
-            href={href}
-            aria-label={label}
-            title={label}
-            className="rounded-xl px-3 py-2 text-neutral-400 transition hover:bg-white/5 hover:text-white"
-          >
-            <Icon />
-          </a>
-        ))}
+        {items.map(([label, href, key, Icon]) => {
+          const active = view === key
+          return (
+            <a
+              key={href}
+              href={href}
+              aria-label={label}
+              title={label}
+              aria-current={active ? 'page' : undefined}
+              className={`rounded-xl px-3 py-2 transition ${
+                active ? 'bg-white/10 text-white' : 'text-neutral-400 hover:bg-white/5 hover:text-white'
+              }`}
+            >
+              <Icon />
+            </a>
+          )
+        })}
       </nav>
     </header>
   )
@@ -378,7 +407,7 @@ function ProjectModal({ project, onClose }: { project: Project; onClose: () => v
 function Projects() {
   const [selected, setSelected] = useState<Project | null>(null)
   return (
-    <section id="projects" className="scroll-mt-28 pt-28">
+    <section id="projects" className="pt-8">
       <Heading line1="Recent" line2="Projects" />
       <div className="space-y-12">
         {projects.map((p, i) => (
@@ -396,7 +425,7 @@ function Projects() {
 
 function ExperienceSection() {
   return (
-    <section id="experience" className="scroll-mt-28 pt-28">
+    <section id="experience" className="pt-8">
       <Heading line1="3+ Years of" line2="Experience" />
       <div className="space-y-12">
         {experiences.map((e, i) => (
@@ -418,7 +447,7 @@ function ExperienceSection() {
 
 function Tools() {
   return (
-    <section id="tools" className="scroll-mt-28 pt-28">
+    <section id="tools" className="pt-8">
       <Heading line1="Tools &" line2="Stack" />
       <div className="grid gap-x-8 gap-y-9 sm:grid-cols-2">
         {tools.map((t, i) => (
@@ -463,7 +492,7 @@ function Contact() {
     'w-full rounded-lg border border-white/5 bg-field px-4 py-3 text-sm text-white placeholder-neutral-600 outline-none transition focus:border-orange'
 
   return (
-    <section id="contact" className="scroll-mt-28 pt-28">
+    <section id="contact" className="pt-8">
       <Heading line1="Let's work" line2="Together" />
       <Reveal>
         <form onSubmit={onSubmit} className="space-y-5">
@@ -517,17 +546,23 @@ function Contact() {
 /* ---------- app ---------- */
 
 export default function App() {
+  const view = useHashView()
+
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [view])
+
   return (
     <div className="mx-auto max-w-[1150px] px-5 pt-28 pb-16 lg:pt-32">
-      <Nav />
+      <Nav view={view} />
       <div className="grid gap-14 lg:grid-cols-[370px_1fr] lg:gap-20">
         <ProfileCard />
-        <main className="min-w-0">
-          <Hero />
-          <Projects />
-          <ExperienceSection />
-          <Tools />
-          <Contact />
+        <main key={view} className="min-w-0">
+          {view === 'top' && <Hero />}
+          {view === 'projects' && <Projects />}
+          {view === 'experience' && <ExperienceSection />}
+          {view === 'tools' && <Tools />}
+          {view === 'contact' && <Contact />}
         </main>
       </div>
       <footer className="mt-28 border-t border-white/5 pt-8 text-center text-sm text-neutral-600">
